@@ -7,7 +7,7 @@ new Vue({
   template: '<App/>',
   data () {
     return {
-      messages: [{msg: 'Hello World'}]
+      messages: []
     }
   },
   components: { App }
