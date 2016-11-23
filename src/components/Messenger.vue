@@ -82,6 +82,11 @@ export default {
     pubnub.onMessage((newMessage) => {
       this.messages.push(newMessage)
     })
+
+    // replace browser state
+    if (this.queryVars.debug == null && window.history != null && window.history.replaceState != null) {
+      window.history.replaceState({}, 'TCA Messenger', '/')
+    }
   },
 
   destroyed () {
