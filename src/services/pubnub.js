@@ -13,15 +13,12 @@ function connect (tcaUserChannel, subscribeKey) {
     pubnub.addListener({
       status: function (statusEvent) {
         if (statusEvent.category === 'PNConnectedCategory') {
-          console.log('PNConnectedCategory heard', statusEvent)
           resolve()
         }
       },
 
       message: function (messageNotification) {
-        console.log('received new messageNotification', messageNotification)
         console.log('received new messageNotification.message', messageNotification.message)
-
         for (var i = 0; i < callbacks.length; i++) {
           callbacks[i].call(this, messageNotification.message)
         }
