@@ -2,28 +2,29 @@ import PubNub from 'pubnub'
 
 let pubnub
 let callbacks = []
+let myTcaUserChannel = null
 
-function connect (tcaUserChannel) {
+function connect (tcaUserChannel, subscribeKey) {
   return new Promise((resolve) => {
     pubnub = new PubNub({
-      publishKey: 'pub-c-ccbdf034-c8ed-4fd1-86fb-880758711b7f',
-      subscribeKey: 'sub-c-da59fece-ac28-11e6-a114-0619f8945a4f'
+      subscribeKey: subscribeKey
     })
 
     pubnub.addListener({
       status: function (statusEvent) {
         if (statusEvent.category === 'PNConnectedCategory') {
+          console.log('PNConnectedCategory heard', statusEvent)
           resolve()
         }
       },
 
       message: function (messageNotification) {
         console.log('received new messageNotification', messageNotification)
+        console.log('received new messageNotification.message', messageNotification.message)
 
         for (var i = 0; i < callbacks.length; i++) {
           callbacks[i].call(this, messageNotification.message)
         }
-        // $('.messages').append('<pre>['+message.message.token+'] '+message.message.msg+(message.message.num ? ' '+message.message.num : '')+'</pre>')
       }
 
     })
@@ -36,15 +37,26 @@ function connect (tcaUserChannel) {
 
 export default {
 
-  init (channelName) {
-    return connect(channelName)
+  init (tcaUserChannel, subscribeKey) {
+    myTcaUserChannel = tcaUserChannel
+    return connect(tcaUserChannel, subscribeKey)
+  },
+
+  close () {
+    pubnub.unsubscribe({
+      channels: ['control', myTcaUserChannel]
+    })
+
+    pubnub = null
+    callbacks = []
+    myTcaUserChannel = null
   },
 
   onMessage (callback) {
     callbacks.push(callback)
   },
 
-  publish (channel, quantity, token, messageString) {
+  publish (channel, message) {
     if (pubnub == null) {
       console.error('init pubnub first')
       return
@@ -52,7 +64,7 @@ export default {
 
     var publishConfig = {
       channel: channel,
-      message: {quantity: quantity, token: token, msg: messageString}
+      message: message
     }
 
     pubnub.publish(publishConfig, (status, response) => {
